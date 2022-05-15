@@ -30,9 +30,10 @@ async function run() {
 
         app.get('/available', async (req, res) => {
             const date = req.query.date;
-            const query = { data: date }
             const services = await serviceCollection.find().toArray()
-            const bookings = await bookingCollection.find().toArray()
+            const query = { data: date }
+
+            const bookings = await bookingCollection.find(query).toArray()
             services.forEach(service => {
                 const serviceBooking = bookings.filter(book => book.treatment === service.name);
                 const bookedSlots = serviceBooking.map(book => book.slot)
