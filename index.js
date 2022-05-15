@@ -38,7 +38,9 @@ async function run() {
                 const bookedSlots = serviceBooking.map(book => book.slot)
                 const available = service.slots.filter(slot => !bookedSlots.includes(slot))
                 service.slots = available
+
             })
+            res.send(services);
 
         })
 
