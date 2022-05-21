@@ -4,6 +4,7 @@ var jwt = require('jsonwebtoken');
 const app = express();
 const cors = require('cors');
 require('dotenv').config();
+const nodemailer = require('nodemailer');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const port = process.env.PORT || 5000;
 
@@ -11,7 +12,44 @@ const port = process.env.PORT || 5000;
 app.use(cors())
 app.use(express.json())
 
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'testmailacc00@gmail.com',
+        pass: process.env.PASS
+    }
+})
 
+// const booking = {
+//     date: formattedDate,
+//     treatmentId: _id,
+//     treatment: name,
+//     slot,
+//     patientEmail: user.email,
+//     patientName: user.displayName,
+//     patientTel: e.target.tel.value,
+//     price
+// }
+const sendBookingMail = booking => {
+    const { patientEmail, treatment, date, slot, patientName } = booking;
+    const mailOptions = {
+        from: 'testmailacc00@gmail.com',
+        to: patientEmail,
+        subject: `Hello ${patientName} your  ${treatment} is Submit Succesfully Listed`,
+        text: `
+        <b>Your appointment is see time at ${date} on ${slot}</b>
+        `,
+
+    }
+
+    transporter.sendMail(mailOptions, (err, data) => {
+        if (err) {
+            console.log('error not sent', err);
+        } else {
+            console.log('send mail')
+        }
+    })
+}
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.0lvo8.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
@@ -103,12 +141,13 @@ async function run() {
 
         app.post('/booking', async (req, res) => {
             const booking = req.body;
-
+            console.log(booking);
             const query = { treatment: booking.treatment, date: booking.date, patientEmail: booking.patientEmail }
             const exists = await bookingCollection.findOne(query);
             if (exists) {
                 return res.send({ success: false, booking: exists })
             }
+            sendBookingMail(booking)
             const result = await bookingCollection.insertOne(booking);
             return res.send({ success: true, result });
         })
@@ -165,7 +204,7 @@ async function run() {
             res.send({ clientSecret: paymentIntent?.client_secret })
         })
 
-        app.put('/user/:email', async (req, res) => {
+        app.put('/user/:email', verifyJWT, async (req, res) => {
 
             const email = req.params.email;
             const user = req.body;
