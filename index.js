@@ -56,7 +56,7 @@ async function run() {
         const sendBookingMail = booking => {
             const { patientEmail, treatment, date, slot, patientName } = booking;
             const mailOptions = {
-                from: process.env.GMAIL,
+                from: 'testmailacc00@gmail.com',
                 to: patientEmail,
                 subject: `Hello ${patientName} your  ${treatment} is Submit Succesfully Listed`,
                 text: `
@@ -77,7 +77,7 @@ async function run() {
         const sendPaymentMail = payment => {
             const { patientEmail, treatment, date, slot, patientName, transactionId } = payment;
             const mailOptions = {
-                from: process.env.GMAIL,
+                from: 'testmailacc00@gmail.com',
                 to: patientEmail,
                 subject: `Hello ${patientName} your  payment succesfull for ${treatment} `,
                 text: `
