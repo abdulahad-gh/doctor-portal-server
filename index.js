@@ -19,37 +19,6 @@ const transporter = nodemailer.createTransport({
         pass: process.env.PASS
     }
 })
-
-// const booking = {
-//     date: formattedDate,
-//     treatmentId: _id,
-//     treatment: name,
-//     slot,
-//     patientEmail: user.email,
-//     patientName: user.displayName,
-//     patientTel: e.target.tel.value,
-//     price
-// }
-const sendBookingMail = booking => {
-    const { patientEmail, treatment, date, slot, patientName } = booking;
-    const mailOptions = {
-        from: 'testmailacc00@gmail.com',
-        to: patientEmail,
-        subject: `Hello ${patientName} your  ${treatment} is Submit Succesfully Listed`,
-        text: `
-        <b>Your appointment is see time at ${date} on ${slot}</b>
-        `,
-
-    }
-
-    transporter.sendMail(mailOptions, (err, data) => {
-        if (err) {
-            console.log('error not sent', err);
-        } else {
-            console.log('send mail')
-        }
-    })
-}
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.0lvo8.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
@@ -82,6 +51,54 @@ async function run() {
         const userCollection = client.db('doctor-portal-db').collection('user');
         const doctorCoolection = client.db('doctor-portal-db').collection('doctor');
         const paymentCoolection = client.db('doctor-portal-db').collection('payment');
+
+
+        const sendBookingMail = booking => {
+            const { patientEmail, treatment, date, slot, patientName } = booking;
+            const mailOptions = {
+                from: 'testmailacc00@gmail.com',
+                to: patientEmail,
+                subject: `Hello ${patientName} your  ${treatment} is Submit Succesfully Listed`,
+                text: `
+                <b>Your appointment is see time at ${date} on ${slot}</b>
+                `,
+
+            }
+
+            transporter.sendMail(mailOptions, (err, data) => {
+                if (err) {
+                    console.log('error not sent', err);
+                } else {
+                    console.log('send mail')
+                }
+            })
+        }
+
+        const sendPaymentMail = payment => {
+            const { patientEmail, treatment, date, slot, patientName, transactionId } = payment;
+            const mailOptions = {
+                from: 'testmailacc00@gmail.com',
+                to: patientEmail,
+                subject: `Hello ${patientName} your  payment succesfull for ${treatment} `,
+                text: `
+                <b>Your appointment is see time at ${date} on ${slot}</b>
+                your transaction id is ${transactionId}
+                `,
+
+            }
+
+            transporter.sendMail(mailOptions, (err, data) => {
+                if (err) {
+                    console.log('error not sent', err);
+                } else {
+                    console.log('send mail')
+                }
+            })
+        }
+
+
+
+
 
 
         const verifyAdmin = async (req, res, next) => {
@@ -167,15 +184,17 @@ async function run() {
         app.patch('/booking/:id', verifyJWT, async (req, res) => {
             const id = req.params.id;
             const payment = req.body;
+            const { transactionId, appointmentId } = payment
             const filter = { _id: ObjectId(id) };
             const updateDoc = {
                 $set: {
                     paid: true,
-                    transactionId: payment.transactionId
+                    transactionId: transactionId
 
                 }
             }
-            const result = await paymentCoolection.insertOne(payment);
+            sendPaymentMail(payment)
+            const result = await paymentCoolection.insertOne({ transactionId, appointmentId });
             const updateBooking = await bookingCollection.updateOne(filter, updateDoc)
             res.send(updateBooking)
         })
